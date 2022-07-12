@@ -1,0 +1,87 @@
+---
+title: "NOAA Storm Database Analysis"
+author: "Syed Shaheryar Tirmizi"
+date: "7/12/2020"
+output: html_document
+---
+## Synopsis
+#### The NOAA database tracks characteristics of major storms and weather events in the United States, including when and where they occur, as well as estimates of any fatalities, injuries, and property damage. This project looks at severe weather events can cause both public health and economic problems
+## Data Processing
+### Loading relevant libraries and reading required data for analysis
+
+```{r echo=TRUE}
+library(dplyr)
+library(ggplot2)
+data<-read.csv("repdata_data_StormData.csv")
+```
+### Filtering and aggregating the data required for question # 1. Get top 5 rows by arranging data in descending order 
+```{r}
+filterData<-data[,c("EVTYPE","FATALITIES")]
+aggregateData<-aggregate(filterData$FATALITIES, by=list(filterData$EVTYPE), sum)
+names(aggregateData)<-c("Event_Type", "Fatalities")
+arrangeData<-arrange(aggregateData,-Fatalities)[1:5,]
+```
+### Filtering the data for Q#2 and calculting exact damage. Total damage is calculted by multiplying the damage value to the exponent value. Exponent values are abbreviated as H for hundred, B for Billoin , 2 for 10^2, any special symbol equal to 0 
+
+```{r}
+subsetdata<-data[,c("EVTYPE","PROPDMG","PROPDMGEXP","CROPDMG","CROPDMGEXP")]
+subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="K"]<-subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="K"]*1000
+subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="m"]<-subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="m"]*10**6
+subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="M"]<-subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="M"]*10**6
+subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="h"]<-subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="h"]*100
+subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="H"]<-subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="H"]*100
+subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="B"]<-subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="B"]*10**9
+subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="8"]<-subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="8"]*10**8
+subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="7"]<-subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="7"]*10**7
+subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="6"]<-subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="6"]*10**6
+subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="5"]<-subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="5"]*10**5
+subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="4"]<-subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="4"]*10**4
+subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="3"]<-subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="3"]*10**3
+subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="2"]<-subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="2"]*10**2
+subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="1"]<-subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="1"]*10
+subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="+"]<-subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="+"]*0
+subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="-"]<-subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="-"]*0
+subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="?"]<-subsetdata$PROPDMG[subsetdata$PROPDMGEXP=="?"]*0
+
+subsetdata$CROPDMG[subsetdata$CROPDMGEXP=="M"]<-subsetdata$CROPDMG[subsetdata$CROPDMGEXP=="M"]*10**6
+subsetdata$CROPDMG[subsetdata$CROPDMGEXP=="m"]<-subsetdata$CROPDMG[subsetdata$CROPDMGEXP=="m"]*10**6
+subsetdata$CROPDMG[subsetdata$CROPDMGEXP=="k"]<-subsetdata$CROPDMG[subsetdata$CROPDMGEXP=="k"]*1000
+subsetdata$CROPDMG[subsetdata$CROPDMGEXP=="K"]<-subsetdata$CROPDMG[subsetdata$CROPDMGEXP=="K"]*1000
+subsetdata$CROPDMG[subsetdata$CROPDMGEXP=="B"]<-subsetdata$CROPDMG[subsetdata$CROPDMGEXP=="B"]*10**9
+subsetdata$CROPDMG[subsetdata$CROPDMGEXP=="2"]<-subsetdata$CROPDMG[subsetdata$CROPDMGEXP=="2"]*10**2
+subsetdata$CROPDMG[subsetdata$CROPDMGEXP=="?"]<-subsetdata$CROPDMG[subsetdata$CROPDMGEXP=="?"]*0
+```
+### Aggregate the data and fetch top 5 rows of crop and property damage after arranging
+
+```{r}
+cropdata<-aggregate(subsetdata$CROPDMG, by=list(subsetdata$EVTYPE), sum)
+propertydata<-aggregate(subsetdata$PROPDMG, by=list(subsetdata$EVTYPE), sum)
+names(cropdata)<-c("Event_Type","Crop_Damage")
+names(propertydata)<-c("Event_Type","Property_Damage")
+cropdata<-arrange(cropdata,-Crop_Damage)[1:5,]
+propertydata<-arrange(propertydata,-Property_Damage)[1:5,]
+```
+## Results
+### Q#1. Across the United States, which types of events (as indicated in the \color{red}{\verb|EVTYPE|}EVTYPE variable) are most harmful with respect to population health?
+
+```{r}
+ggplot(arrangeData, aes(x=Event_Type, y=Fatalities,col="perple"))+geom_col() +  theme(axis.text.x = element_text(angle = 90)) +labs(x="Event Type", y="Fatalities", title = "No of fatalities by worst 5 weather events")
+```
+
+### Hence by plot, it is cleared that Tornado is the most destructive.
+
+### Q# 2. Across the United States, which types of events have the greatest economic consequences?
+
+```{r}
+plot1<-ggplot(data=cropdata, aes(x=Event_Type,y=Crop_Damage), col="purple")+geom_bar(stat = "Identity") + theme(axis.text.x = element_text(angle = 90)) +labs(x="Event Type", y="Crop Damage cost", title = "Crop Damage cost by worst 5 weather events")
+plot2<-ggplot(data=propertydata, aes(x=Event_Type,y=Property_Damage), col="red")+geom_bar(stat = "Identity")+ theme(axis.text.x = element_text(angle = 90)) +labs(x="Event Type", y="Property damage cost", title = "Property damage cost  by worst 5 weather events")
+plot1
+```
+
+### For crops, Drought is the most devastating condition
+
+```{r}
+plot2
+```
+
+### For property, Flood is the most devastating condition
