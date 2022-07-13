@@ -1,0 +1,66 @@
+---
+title: "Statistical Inference (Simulaton Exercise)"
+author: "Syed Shaheryar Tirmizi"
+date: "7/27/2020"
+---
+
+## Overview
+### In this exercise, I'm gonna perform 1000 simulations on 40 exponentials Data. Firstly, mean, variance and standard deviation of are calculated by general R manipulation. Then, by formula, mean, variance and standrd deviation is calculated and compare them. At the end, the data is visualized to check its approximation with Normal Distribution. 
+
+## 1. Expected values Calculation of simulated data.
+
+```{r}
+library(ggplot2)
+set.seed(555)
+lamda<-0.2
+n<-40
+simulations<-1:1000
+simulatedData<-data.frame(x=sapply(simulations, function(x) {mean(rexp(n,lamda))}))
+meanData<-apply(simulatedData, 2, mean)
+standarDeviataion<-apply(simulatedData, 2, sd)
+Variance<-apply(simulatedData,2,var)
+```
+## 2. Expected values calculation by Formula of Center Limit Theorem.
+
+```{r}
+cltMean<-1/lamda
+CLTstandardDeviation<-(1/lamda)/sqrt(n)
+CLTvariance<-CLTstandardDeviation**2
+```
+
+## 3. Showing mean, variance and standard deviation of simulated data
+
+```{r}
+meanData
+```
+```{r}
+Variance
+```
+```{r}
+standarDeviataion
+```
+
+## 4. Showing mean, variance and standard deviation of Central Limit Theorem
+
+```{r}
+cltMean
+```
+```{r}
+CLTvariance
+```
+```{r}
+CLTstandardDeviation
+```
+
+## 5. Compare the expected values with the valus of central limit theorem.
+### By showing values, it is concluded that expected values are approximately equal to the values of Central Limit Theorem.
+
+## 6. Visualization of simulated data to approximate it with Normal Distribution
+
+```{r}
+g<-ggplot(simulatedData, aes(x=x))
+g<-g+geom_histogram(aes(y=..density..),binwidth = 0.20)
+g<-g+stat_function(fun=dnorm, args=list(mean=meanData, sd=standarDeviataion))
+g<-g+geom_vline(xintercept = meanData, color="red")
+print(g)
+```
