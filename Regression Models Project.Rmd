@@ -1,0 +1,106 @@
+---
+title: "Motor Trend Magzine - Regreesion Models"
+author: "Syed Shaheryar Tirmizi"
+date: "8/28/2020"
+output: 
+html_document: default
+---
+
+## Executive Summary
+
+The basic aim of this assignment is to analyze which transmission mode (Auto or Manual) is better in terms of Miles per gallon.
+All I have to do is to use linear regression model that will minimize the error and has required variables.
+mtcars dataset, provided by r, is used in this analysis.
+The analysis also focuses on relationship of mpg with other variables.
+
+## 1. Preliminary Analysis
+
+```{r}
+library(datasets)
+library(ggplot2)
+data("mtcars")
+dim(mtcars)
+str(mtcars)
+summary(mtcars)
+head(mtcars)
+```
+So, the dataset contains 11 variables and 32 records.
+Moreover, am variable shows transmission mode (1 for manual & 0 for automatic)
+
+## 2. Data Pre-processing
+
+```{r}
+mtcars$am<-as.factor(mtcars$am)
+levels(mtcars$am)<-c("Automatic", "Manual")
+```
+The am variable is now a factor of 2.
+Let's check it now
+
+```{r}
+class(mtcars$am)
+head(mtcars)
+```
+
+## 3. Hypothesis Validation
+Let's just consider 2 variables only i-e mpg and am.
+Null Hypothesis states that there is no difference between mean of trasnmission modes.
+In other words, it states that transmission modes has no effect on mgp.
+Let's validate it with t test.
+
+```{r}
+t.test(mtcars$mpg~mtcars$am)
+```
+
+Since P value (0.001) is less then the Threshold value (0.05), hence we can reject the null hypothesis.
+It means that there is difference between means of automatic and manual mode (Alternative Hypothesis)
+
+## 4. Regression Analysis
+
+To further investigate Alternative hypothesis, let's do some regression modeling.
+
+```{r}
+model1<-lm(mpg~am,mtcars)
+summary(model1)
+```
+By this simple model, we can conclude that, on average, Manual mode cars travel 7.245 miles per gallon more than that of Automatic mode cars provided that other variables remain constant.
+This model is not efficient as Adjusted R Squared value (0.3345) suggests that it accounts or only 33.45% variance.
+
+Let's see what happens if we add all variables in our model
+
+```{r}
+model2<-lm(mpg~., mtcars)
+summary(model2)
+```
+This model is good and accounts for 80.66% variance.
+
+To choose best model, step function in r is useful that returns the best model acoording to the given parameters. in my case, I didn't add any other parameters and used the default setting.
+
+```{r}
+bestModl<-step(model2, trace = 0)
+summary(bestModl)
+```
+Now this model accounts for 83.36% variance and includes 3 variables i-e Transmission mode (am), weight (wt) and qsec (1/4 mile time).
+
+## 5. Conclusion
+
+1. From simple regression model, it is concluded that Manual mode is better than Automatic mode with other variable remain constant
+
+2. negative sign with wt indicates that weight is negatively associated with mpg.
+Moreover, this model suggests that Manual mode is better than Auto mode by 2.9358 miles.
+
+## Apendix
+
+### Appendix 1: Boxplot of mpg with Transmission mode
+
+```{r}
+g<-ggplot(mtcars, aes(x=am, y=mpg))+geom_boxplot(outlier.colour = "black", outlier.shape = 2, fill="purple")
+g<-g + labs(title = "Comparative effect of Automatic and manual cars on Miles per Gallon (mpg)", x="Transimission mode", y="Miles per gallon")
+g
+```
+
+### Appendix 2: Residual Plots
+
+```{r}
+par(mfrow=c(2,2)) 
+plot(bestModl)
+```
